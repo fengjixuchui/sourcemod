@@ -32,9 +32,12 @@
 #ifndef _INCLUDE_SOURCEMOD_PLUGINSYSTEM_H_
 #define _INCLUDE_SOURCEMOD_PLUGINSYSTEM_H_
 
-#include <time.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <time.h>
+
+#include <memory>
+
 #include <IPluginSys.h>
 #include <IHandleSys.h>
 #include <IForwardSys.h>
@@ -129,10 +132,10 @@ public:
 		bool required;
 	};
 
-	typedef ke::Lambda<bool(const sp_pubvar_t *, const ExtVar& ext)> ExtVarCallback;
+	typedef ke::Function<bool(const sp_pubvar_t *, const ExtVar& ext)> ExtVarCallback;
 	bool ForEachExtVar(const ExtVarCallback& callback);
 
-	void ForEachLibrary(ke::Lambda<void(const char *)> callback);
+	void ForEachLibrary(ke::Function<void(const char *)> callback);
 public:
 	/**
 	 * Creates a plugin object with default values.
@@ -215,7 +218,7 @@ public:
 	}
 
 	void AddRequiredLib(const char *name);
-	bool ForEachRequiredLib(ke::Lambda<bool(const char *)> callback);
+	bool ForEachRequiredLib(ke::Function<bool(const char *)> callback);
 
 	bool HasMissingFakeNatives() const {
 		return m_FakeNativesMissing;
@@ -267,8 +270,8 @@ private:
 	char m_errormsg[256];
 
 	// Internal properties that must by reset if the runtime is evicted.
-	ke::AutoPtr<IPluginRuntime> m_pRuntime;
-	ke::AutoPtr<CPhraseCollection> m_pPhrases;
+	std::unique_ptr<IPluginRuntime> m_pRuntime;
+	std::unique_ptr<CPhraseCollection> m_pPhrases;
 	IPluginContext *m_pContext;
 	sp_pubvar_t *m_MaxClientsVar;
 	StringHashMap<void *> m_Props;
@@ -432,7 +435,7 @@ public:
 
 	void _SetPauseState(CPlugin *pPlugin, bool pause);
 
-	void ForEachPlugin(ke::Lambda<void(CPlugin *)> callback);
+	void ForEachPlugin(ke::Function<void(CPlugin *)> callback);
 private:
 	LoadRes LoadPlugin(CPlugin **pPlugin, const char *path, bool debug, PluginType type);
 

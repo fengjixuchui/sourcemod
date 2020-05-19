@@ -79,7 +79,7 @@ CPlugin::CPlugin(const char *file)
 
 	memset(&m_info, 0, sizeof(m_info));
 
-	m_pPhrases = g_Translator.CreatePhraseCollection();
+	m_pPhrases.reset(g_Translator.CreatePhraseCollection());
 }
 
 CPlugin::~CPlugin()
@@ -227,7 +227,7 @@ bool CPlugin::SetProperty(const char *prop, void *ptr)
 
 IPluginRuntime *CPlugin::GetRuntime()
 {
-	return m_pRuntime;
+	return m_pRuntime.get();
 }
 
 void CPlugin::EvictWithError(PluginStatus status, const char *error_fmt, ...)
@@ -483,7 +483,7 @@ bool CPlugin::TryCompile()
 	g_pSM->BuildPath(Path_SM, fullpath, sizeof(fullpath), "plugins/%s", m_filename);
 
 	char loadmsg[255];
-	m_pRuntime = g_pSourcePawn2->LoadBinaryFromFile(fullpath, loadmsg, sizeof(loadmsg));
+	m_pRuntime.reset(g_pSourcePawn2->LoadBinaryFromFile(fullpath, loadmsg, sizeof(loadmsg)));
 	if (!m_pRuntime) {
 		EvictWithError(Plugin_BadLoad, "Unable to load plugin (%s)", loadmsg);
 		return false;
@@ -658,7 +658,7 @@ time_t CPlugin::GetFileTimeStamp()
 
 IPhraseCollection *CPlugin::GetPhrases()
 {
-	return m_pPhrases;
+	return m_pPhrases.get();
 }
 
 void CPlugin::DependencyDropped(CPlugin *pOwner)
@@ -1165,7 +1165,7 @@ bool CPlugin::ForEachExtVar(const ExtVarCallback& callback)
 	return true;
 }
 
-void CPlugin::ForEachLibrary(ke::Lambda<void(const char *)> callback)
+void CPlugin::ForEachLibrary(ke::Function<void(const char *)> callback)
 {
 	for (auto iter = m_Libraries.begin(); iter != m_Libraries.end(); iter++)
 		callback((*iter).c_str());
@@ -1177,7 +1177,7 @@ void CPlugin::AddRequiredLib(const char *name)
 		m_RequiredLibs.push_back(name);
 }
 
-bool CPlugin::ForEachRequiredLib(ke::Lambda<bool(const char *)> callback)
+bool CPlugin::ForEachRequiredLib(ke::Function<bool(const char *)> callback)
 {
 	for (auto iter = m_RequiredLibs.begin(); iter != m_RequiredLibs.end(); iter++) {
 		if (!callback((*iter).c_str()))
@@ -2273,7 +2273,7 @@ void CPluginManager::FreePluginList(const CVector<SMPlugin *> *list)
 	delete const_cast<CVector<SMPlugin *> *>(list);
 }
 
-void CPluginManager::ForEachPlugin(ke::Lambda<void(CPlugin *)> callback)
+void CPluginManager::ForEachPlugin(ke::Function<void(CPlugin *)> callback)
 {
 	for (PluginIter iter(m_plugins); !iter.done(); iter.next())
 		callback(*iter);
