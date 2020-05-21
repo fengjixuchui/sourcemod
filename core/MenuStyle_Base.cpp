@@ -637,10 +637,10 @@ bool CBaseMenu::AppendItem(const char *info, const ItemDrawInfo &draw)
 
 	item.info = info;
 	if (draw.display)
-		item.display = std::make_unique<ke::AString>(draw.display);
+		item.display = std::make_unique<std::string>(draw.display);
 	item.style = draw.style;
 
-	m_items.append(ke::Move(item));
+	m_items.append(std::move(item));
 	return true;
 }
 
@@ -658,10 +658,10 @@ bool CBaseMenu::InsertItem(unsigned int position, const char *info, const ItemDr
 	CItem item;
 	item.info = info;
 	if (draw.display)
-		item.display = std::make_unique<ke::AString>(draw.display);
+		item.display = std::make_unique<std::string>(draw.display);
 	item.style = draw.style;
 
-	m_items.insert(position, ke::Move(item));
+	m_items.insert(position, std::move(item));
 	return true;
 }
 
@@ -686,11 +686,11 @@ const char *CBaseMenu::GetItemInfo(unsigned int position, ItemDrawInfo *draw/* =
 
 	if (draw)
 	{
-		draw->display = m_items[position].display->chars();
+		draw->display = m_items[position].display->c_str();
 		draw->style = m_items[position].style;
 	}
 
-	return m_items[position].info.chars();
+	return m_items[position].info.c_str();
 }
 
 unsigned int CBaseMenu::GetItemCount()
@@ -733,7 +733,7 @@ void CBaseMenu::SetDefaultTitle(const char *message)
 
 const char *CBaseMenu::GetDefaultTitle()
 {
-	return m_Title.chars();
+	return m_Title.c_str();
 }
 
 void CBaseMenu::Cancel()

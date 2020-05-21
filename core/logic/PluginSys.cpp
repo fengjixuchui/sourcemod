@@ -276,7 +276,7 @@ bool CPlugin::ReadInfo()
 		sm_plugininfo_c_t *cinfo;
 		cell_t local_addr;
 
-		auto update_field = [base](cell_t addr, ke::AString *dest) {
+		auto update_field = [base](cell_t addr, std::string *dest) {
 			const char* ptr;
 			if (base->LocalToString(addr, (char **)&ptr) == SP_ERROR_NONE)
 				*dest = ptr;
@@ -524,11 +524,11 @@ PluginType CPlugin::GetType()
 
 const sm_plugininfo_t *CPlugin::GetPublicInfo()
 {
-	m_info.author = info_author_.chars();
-	m_info.description = info_description_.chars();
-	m_info.name = info_name_.chars();
-	m_info.url = info_url_.chars();
-	m_info.version = info_version_.chars();
+	m_info.author = info_author_.c_str();
+	m_info.description = info_description_.c_str();
+	m_info.name = info_name_.c_str();
+	m_info.url = info_url_.c_str();
+	m_info.version = info_version_.c_str();
 	return &m_info;
 }
 
@@ -1211,7 +1211,7 @@ void CPluginManager::LoadExtensions(CPlugin *pPlugin)
 		}
 		return true;
 	};
-	pPlugin->ForEachExtVar(ke::Move(callback));
+	pPlugin->ForEachExtVar(std::move(callback));
 }
 
 bool CPluginManager::RequireExtensions(CPlugin *pPlugin)
@@ -1247,7 +1247,7 @@ bool CPluginManager::RequireExtensions(CPlugin *pPlugin)
 		return true;
 	};
 
-	return pPlugin->ForEachExtVar(ke::Move(callback));
+	return pPlugin->ForEachExtVar(std::move(callback));
 }
 
 CPlugin *CPluginManager::CompileAndPrep(const char *path)
@@ -2063,7 +2063,7 @@ bool CPluginManager::ReloadPlugin(CPlugin *pl, bool print)
 	if (state == PluginState::WaitingToUnloadAndReload)
 		return false;
 
-	ke::AString filename(pl->GetFilename());
+	std::string filename(pl->GetFilename());
 	PluginType ptype = pl->GetType();
 
 	int id = 1;
@@ -2078,13 +2078,13 @@ bool CPluginManager::ReloadPlugin(CPlugin *pl, bool print)
 		{
 			pl->SetWaitingToUnload(true);
 			ScheduleTaskForNextFrame([this, id, filename, ptype, print]() -> void {
-				ReloadPluginImpl(id, filename.chars(), ptype, print);
+				ReloadPluginImpl(id, filename.c_str(), ptype, print);
 			});
 		}
 		return false;
 	}
 
-	ReloadPluginImpl(id, filename.chars(), ptype, false);
+	ReloadPluginImpl(id, filename.c_str(), ptype, false);
 	return true;
 }
 
