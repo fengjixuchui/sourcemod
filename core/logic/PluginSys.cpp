@@ -45,7 +45,6 @@
 #include "Logger.h"
 #include "frame_tasks.h"
 #include <amtl/am-string.h>
-#include <amtl/am-linkedlist.h>
 #include <bridge/include/IVEngineServerBridge.h>
 #include <bridge/include/CoreProvider.h>
 
@@ -674,7 +673,7 @@ void CPlugin::DependencyDropped(CPlugin *pOwner)
 	}
 
 	unsigned int unbound = 0;
-	for (size_t i = 0; i < pOwner->m_fakes.length(); i++)
+	for (size_t i = 0; i < pOwner->m_fakes.size(); i++)
 	{
 		ke::RefPtr<Native> entry(pOwner->m_fakes[i]);
 
@@ -773,13 +772,13 @@ bool CPlugin::AddFakeNative(IPluginFunction *pFunc, const char *name, SPVM_FAKEN
 	if (!entry)
 		return false;
 
-	m_fakes.append(entry);
+	m_fakes.push_back(entry);
 	return true;
 }
 
 void CPlugin::BindFakeNativesTo(CPlugin *other)
 {
-	for (size_t i = 0; i < m_fakes.length(); i++)
+	for (size_t i = 0; i < m_fakes.size(); i++)
 		g_ShareSys.BindNativeToPlugin(other, m_fakes[i]);
 }
 
@@ -790,7 +789,7 @@ void CPlugin::BindFakeNativesTo(CPlugin *other)
 CPluginManager::CPluginIterator::CPluginIterator(ReentrantList<CPlugin *>& in)
 {
 	for (PluginIter iter(in); !iter.done(); iter.next())
-		mylist.append(*iter);
+		mylist.push_back(*iter);
 	current = mylist.begin();
 	g_PluginSys.AddPluginsListener(this);
 }
@@ -1033,7 +1032,7 @@ void CPluginManager::LoadAutoPlugin(const char *plugin)
 
 void CPluginManager::AddPlugin(CPlugin *pPlugin)
 {
-	m_plugins.append(pPlugin);
+	m_plugins.push_back(pPlugin);
 	m_LoadLookup.insert(pPlugin->GetFilename(), pPlugin);
 
 	pPlugin->SetRegistered();
@@ -1536,12 +1535,12 @@ CPlugin *CPluginManager::GetPluginByCtx(const sp_context_t *ctx)
 
 unsigned int CPluginManager::GetPluginCount()
 {
-	return m_plugins.length();
+	return m_plugins.size();
 }
 
 void CPluginManager::AddPluginsListener(IPluginsListener *listener)
 {
-	m_listeners.append(listener);
+	m_listeners.push_back(listener);
 }
 
 void CPluginManager::RemovePluginsListener(IPluginsListener *listener)
@@ -1715,7 +1714,7 @@ void CPluginManager::OnRootConsoleCommand(const char *cmdname, const ICommandArg
 				rootmenu->ConsolePrint("[SM] Listing %d plugin%s:", plnum, (plnum > 1) ? "s" : "");
 			}
 
-			ke::LinkedList<CPlugin *> fail_list;
+			std::list<CPlugin *> fail_list;
 
 			for (PluginIter iter(m_plugins); !iter.done(); iter.next(), id++) {
 				CPlugin *pl = (*iter);
@@ -1727,7 +1726,7 @@ void CPluginManager::OnRootConsoleCommand(const char *cmdname, const ICommandArg
 					len += ke::SafeSprintf(buffer, sizeof(buffer), "  %0*d <%s>", plpadding, id, GetStatusText(pl->GetDisplayStatus()));
 
 					/* Plugin has failed to load. */
-					fail_list.append(pl);
+					fail_list.push_back(pl);
 				}
 				else
 				{
@@ -2033,7 +2032,8 @@ void CPluginManager::OnRootConsoleCommand(const char *cmdname, const ICommandArg
 					//the unload/reload attempt next frame will print a message
 					case PluginState::WaitingToUnload:
 					case PluginState::WaitingToUnloadAndReload:
-						return;
+						rootmenu->ConsolePrint("[SM] Plugin %s will be reloaded on the next frame.", name);
+						break;
 
 					default:
 						rootmenu->ConsolePrint("[SM] Failed to reload plugin %s.", name);
@@ -2351,7 +2351,7 @@ public:
 	{
 		ke::RefPtr<PluginsListenerV1Wrapper> wrapper = new PluginsListenerV1Wrapper(listener);
 
-		v1_wrappers_.append(wrapper);
+		v1_wrappers_.push_back(wrapper);
 		g_PluginSys.AddPluginsListener(wrapper);
 	}
 
